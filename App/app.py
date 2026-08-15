@@ -14,31 +14,66 @@ st.set_page_config(
     layout="wide"
 )
 
-# ------------------------------------------------------------
-# Project paths
-# ------------------------------------------------------------
+
+# ============================================================
+# PROJECT PATHS
+# ============================================================
 
 APP_DIR = Path(__file__).resolve().parent
+
 MODEL_PATH = APP_DIR / "Models" / "intellichurn_model_v5.pkl"
 
-# ------------------------------------------------------------
-# Load V5 model
-# ------------------------------------------------------------
+THRESHOLD_PATH = APP_DIR / "Models" / "threshold.txt"
+
+
+# ============================================================
+# LOAD MODEL
+# ============================================================
 
 if not MODEL_PATH.exists():
+
     st.error("❌ IntelliChurn V5 model was not found.")
-    st.write(f"Expected location: {MODEL_PATH}")
+
+    st.write(
+        f"Expected model location:\n{MODEL_PATH}"
+    )
+
     st.stop()
 
-model = joblib.load(MODEL_PATH)
+
 try:
+
     model = joblib.load(MODEL_PATH)
-except FileNotFoundError:
-    st.error(
-        "❌ IntelliChurn V5 model was not found.\n\n"
-        f"Expected location:\n{MODEL_PATH}"
-    )
+
+except Exception as e:
+
+    st.error("❌ Failed to load IntelliChurn V5 model.")
+
+    st.exception(e)
+
     st.stop()
+
+
+# ============================================================
+# LOAD THRESHOLD
+# ============================================================
+
+THRESHOLD = 0.50
+
+
+if THRESHOLD_PATH.exists():
+
+    try:
+
+        with open(THRESHOLD_PATH, "r") as f:
+
+            THRESHOLD = float(
+                f.read().strip()
+            )
+
+    except Exception:
+
+        THRESHOLD = 0.50
 
 
 # ============================================================
@@ -47,11 +82,14 @@ except FileNotFoundError:
 
 st.title("📊 IntelliChurn")
 
-st.subheader("Customer Churn Prediction System")
+st.subheader(
+    "Customer Churn Prediction System"
+)
 
 st.write(
-    "Analyze customer information and identify customers who may be "
-    "at risk of churn using the IntelliChurn V5 machine learning model."
+    "Analyze customer information and identify customers "
+    "who may be at risk of churn using the IntelliChurn "
+    "V5 machine learning model."
 )
 
 st.divider()
@@ -115,20 +153,34 @@ with col3:
     )
 
     st.caption(
-        "ℹ️ Satisfaction Score is displayed for customer context. "
-        "It is not used by the V5 model."
+        "ℹ️ Satisfaction Score is displayed for customer "
+        "context. It is not used by the V5 model."
     )
 
 
-# Derived customer information
+# ============================================================
+# DERIVED CUSTOMER FEATURES
+# ============================================================
 
-dependents = "Yes" if family_members > 0 else "No"
+dependents = (
+    "Yes"
+    if family_members > 0
+    else "No"
+)
 
 number_dependents = family_members
 
-under_30 = "Yes" if age < 30 else "No"
+under_30 = (
+    "Yes"
+    if age < 30
+    else "No"
+)
 
-senior_citizen = "Yes" if age >= 65 else "No"
+senior_citizen = (
+    "Yes"
+    if age >= 65
+    else "No"
+)
 
 
 # ============================================================
@@ -311,31 +363,18 @@ predict_button = st.button(
 if predict_button:
 
     # --------------------------------------------------------
-    # DERIVED FEATURES
+    # DERIVED MODEL FEATURES
     # --------------------------------------------------------
 
-    # Internet service is automatically determined
-    # from the selected internet type.
     internet_service = (
         "No"
         if internet_type == "No Internet"
         else "Yes"
     )
 
-    # Phone service is assumed to be active because this
-    # application is designed around existing telecom customers.
     phone_service = "Yes"
 
-    # Multiple Lines is represented in the dataset as Yes/No.
     multiple_lines = extra_phone_numbers
-
-    # --------------------------------------------------------
-    # Hidden / Derived Dataset Features
-    # --------------------------------------------------------
-
-    # These fields are not shown to the user because they are
-    # technical dataset variables rather than useful customer
-    # inputs.
 
     population = 50000
 
@@ -369,12 +408,6 @@ if predict_button:
         + total_long_distance
         - total_refunds
     )
-
-    # CLTV is not entered manually.
-    # We estimate it from the customer's revenue and tenure.
-    #
-    # This keeps the interface simple while providing the model
-    # with a value in the same general scale as the training data.
 
     cltv = (
         total_revenue * 1.25
@@ -464,28 +497,48 @@ if predict_button:
 
 
     # --------------------------------------------------------
-    # SAFETY CHECK
+    # FEATURE VALIDATION
     # --------------------------------------------------------
 
     expected_features = 36
 
-    if input_data.shape[1] != expected_features:
+    actual_features = input_data.shape[1]
+
+
+    if actual_features != expected_features:
 
         st.error(
-            f"❌ Feature mismatch detected.\n\n"
-            f"Expected: {expected_features} features\n"
-            f"Received: {input_data.shape[1]} features"
+            "❌ Feature mismatch detected."
+        )
+
+        st.write(
+            f"Expected features: {expected_features}"
+        )
+
+        st.write(
+            f"Received features: {actual_features}"
+        )
+
+        st.write(
+            "Features being sent to the model:"
+        )
+
+        st.write(
+            list(input_data.columns)
         )
 
         st.stop()
 
 
-    # Make absolutely sure Satisfaction Score is NOT sent
+    # --------------------------------------------------------
+    # SATISFACTION SCORE SAFETY CHECK
+    # --------------------------------------------------------
+
     if "Satisfaction Score" in input_data.columns:
 
         st.error(
-            "❌ Satisfaction Score was accidentally included "
-            "in the model input."
+            "❌ Satisfaction Score was accidentally "
+            "included in the model input."
         )
 
         st.stop()
@@ -495,27 +548,102 @@ if predict_button:
     # MODEL PREDICTION
     # --------------------------------------------------------
 
-    prediction = model.predict(input_data)[0]
+    try:
 
-    probability = model.predict_proba(
-        input_data
-    )[0][1]
+        probabilities = model.predict_proba(
+            input_data
+        )[0]
 
-    probability_percent = probability * 100
+    except Exception as e:
+
+        st.error(
+            "❌ The IntelliChurn model could not process "
+            "the customer information."
+        )
+
+        st.exception(e)
+
+        st.stop()
+
+
+    # --------------------------------------------------------
+    # GET CHURN PROBABILITY
+    # --------------------------------------------------------
+
+    try:
+
+        classes = list(model.classes_)
+
+    except AttributeError:
+
+        st.error(
+            "❌ The loaded model does not expose "
+            "class information."
+        )
+
+        st.stop()
+
+
+    if "Yes" in classes:
+
+        churn_index = classes.index("Yes")
+
+    elif 1 in classes:
+
+        churn_index = classes.index(1)
+
+    else:
+
+        st.error(
+            "❌ Could not identify the churn class "
+            "in the loaded model."
+        )
+
+        st.write(
+            "Model classes:",
+            classes
+        )
+
+        st.stop()
+
+
+    probability = float(
+        probabilities[churn_index]
+    )
+
+    probability_percent = (
+        probability * 100
+    )
+
+
+    # --------------------------------------------------------
+    # FINAL PREDICTION USING V5 THRESHOLD
+    # --------------------------------------------------------
+
+    if probability >= THRESHOLD:
+
+        prediction = "Yes"
+
+    else:
+
+        prediction = "No"
 
 
     # --------------------------------------------------------
     # RISK CLASSIFICATION
     # --------------------------------------------------------
 
-    # V5 threshold = 0.50
-THRESHOLD_PATH = APP_DIR / "Models" / "threshold.txt"
+    if probability >= 0.70:
 
-if THRESHOLD_PATH.exists():
-    with open(THRESHOLD_PATH, "r") as f:
-        THRESHOLD = float(f.read().strip())
-else:
-    THRESHOLD = 0.50
+        risk_level = "High Risk"
+
+    elif probability >= 0.40:
+
+        risk_level = "Medium Risk"
+
+    else:
+
+        risk_level = "Low Risk"
 
 
     # ========================================================
@@ -528,7 +656,7 @@ else:
 
 
     # --------------------------------------------------------
-    # Main Prediction
+    # MAIN PREDICTION
     # --------------------------------------------------------
 
     if prediction == "Yes":
@@ -545,7 +673,7 @@ else:
 
 
     # --------------------------------------------------------
-    # Metrics
+    # METRICS
     # --------------------------------------------------------
 
     col1, col2, col3 = st.columns(3)
@@ -576,13 +704,21 @@ else:
 
 
     # --------------------------------------------------------
-    # Probability Progress Bar
+    # PROBABILITY PROGRESS BAR
     # --------------------------------------------------------
 
     st.subheader("Churn Risk")
 
     st.progress(
-        min(max(probability, 0.0), 1.0)
+        min(
+            max(probability, 0.0),
+            1.0
+        )
+    )
+
+
+    st.caption(
+        f"V5 prediction threshold: {THRESHOLD:.2f}"
     )
 
 
@@ -590,7 +726,9 @@ else:
     # BUSINESS RECOMMENDATION
     # ========================================================
 
-    st.subheader("💡 Recommended Action")
+    st.subheader(
+        "💡 Recommended Action"
+    )
 
 
     if risk_level == "High Risk":
@@ -639,7 +777,9 @@ else:
     # CUSTOMER SUMMARY
     # ========================================================
 
-    with st.expander("👤 View Customer Profile"):
+    with st.expander(
+        "👤 View Customer Profile"
+    ):
 
         profile_data = pd.DataFrame({
 
@@ -663,6 +803,7 @@ else:
 
         })
 
+
         st.dataframe(
             profile_data,
             hide_index=True,
@@ -674,7 +815,9 @@ else:
     # MODEL INPUT SUMMARY
     # ========================================================
 
-    with st.expander("🔍 View Model Input"):
+    with st.expander(
+        "🔍 View Model Input"
+    ):
 
         st.dataframe(
             input_data.T.rename(
@@ -683,7 +826,9 @@ else:
             use_container_width=True
         )
 
+
         st.caption(
-            "Satisfaction Score is intentionally excluded because "
-            "the verified V5 model was trained without it."
+            "Satisfaction Score is intentionally excluded "
+            "because the verified V5 model was trained "
+            "without it."
         )
