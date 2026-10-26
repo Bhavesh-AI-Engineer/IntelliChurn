@@ -772,6 +772,68 @@ if predict_button:
             """
         )
 
+    # ========================================================
+    # DOWNLOADABLE PREDICTION REPORT
+    # ========================================================
+
+    st.subheader("📥 Export Prediction Report")
+
+    report = pd.DataFrame([{
+        "Generated At": pd.Timestamp.now().strftime(
+            "%Y-%m-%d %H:%M:%S"
+        ),
+        "Model Version": "IntelliChurn V5",
+        "Prediction": (
+            "Likely to CHURN"
+            if prediction == "Yes"
+            else "Likely to STAY"
+        ),
+        "Churn Probability (%)": round(
+            probability_percent, 2
+        ),
+        "Risk Level": risk_level,
+        "Prediction Threshold": THRESHOLD,
+        "Age": age,
+        "Gender": gender,
+        "Married": married,
+        "Family Members": family_members,
+        "Satisfaction Score (display only)": satisfaction,
+        "Tenure (Months)": tenure,
+        "Contract": contract,
+        "Monthly Charge ($)": monthly_charge,
+        "Payment Method": payment_method,
+        "Internet Type": internet_type,
+        "Extra Phone Numbers": extra_phone_numbers,
+        "Online Security": online_security,
+        "Online Backup": online_backup,
+        "Device Protection": device_protection,
+        "Premium Tech Support": tech_support,
+        "Streaming TV": streaming_tv,
+        "Streaming Movies": streaming_movies,
+        "Streaming Music": streaming_music,
+        "Unlimited Data": unlimited_data,
+        "Paperless Billing": paperless_billing,
+        "Referrals": referrals,
+    }])
+
+    report_csv = report.to_csv(index=False).encode("utf-8")
+
+    st.download_button(
+        label="⬇️ Download Prediction Report (CSV)",
+        data=report_csv,
+        file_name=(
+            "intellichurn_prediction_"
+            f"{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.csv"
+        ),
+        mime="text/csv",
+        use_container_width=True,
+    )
+
+    st.caption(
+        "The report is generated on demand and is not "
+        "saved by IntelliChurn to a database."
+    )
+
 
     # ========================================================
     # CUSTOMER SUMMARY

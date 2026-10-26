@@ -62,6 +62,7 @@ This allows businesses to move from **reactive retention** toward **proactive cu
 * 🖥️ Interactive Streamlit interface
 * 🔄 End-to-end ML pipeline
 * 📦 Serialized production model
+* 📥 Downloadable CSV prediction reports
 
 ---
 
