@@ -387,7 +387,7 @@ Detailed project structure:
 ### 1. Clone the repository
 
 ```bash
-git clone git clone https://github.com/bhaveshpawar937-0948/IntelliChurn.git
+git clone https://github.com/bhaveshpawar937-0948/IntelliChurn.git
 cd IntelliChurn
 ```
 
