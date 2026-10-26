@@ -6,7 +6,7 @@
 [![Scikit-learn](https://img.shields.io/badge/Scikit--learn-Machine%20Learning-orange?logo=scikit-learn)](https://scikit-learn.org/)
 [![Streamlit](https://img.shields.io/badge/Streamlit-Web%20App-red?logo=streamlit)](https://streamlit.io/)
 [![Status](https://img.shields.io/badge/Project-Completed-success)]()
-
+🚀 **[Try IntelliChurn Live](https://intellichurn.streamlit.app/)**
 ---
 
 ## 📌 Overview
@@ -387,7 +387,7 @@ Detailed project structure:
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/bhaveshpawar937-0948/IntelliChurn.git
+git clone https://github.com/Bhavesh-AI-Engineer/IntelliChurn.git
 cd IntelliChurn
 ```
 
