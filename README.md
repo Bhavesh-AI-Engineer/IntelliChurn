@@ -63,6 +63,7 @@ This allows businesses to move from **reactive retention** toward **proactive cu
 * 🔄 End-to-end ML pipeline
 * 📦 Serialized production model
 * 📥 Downloadable CSV prediction reports
+* 💰 Estimated annual recurring revenue at risk
 
 ---
 
@@ -442,7 +443,7 @@ Potential future improvements include:
 * 📊 Model explainability using SHAP
 * 📈 Interactive analytics dashboard
 * 🎯 Customer segmentation
-* 💰 Estimated revenue-at-risk analysis
+* 💰 Revenue-at-risk analysis using actual billing and historical revenue data
 * 🔄 Automated model retraining
 * ☁️ Cloud deployment
 * 📡 Monitoring model performance after deployment

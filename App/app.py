@@ -614,7 +614,9 @@ if predict_button:
     probability_percent = (
         probability * 100
     )
-
+    estimated_annual_revenue_at_risk = (
+        monthly_charge * 12 * probability
+    )
 
     # --------------------------------------------------------
     # FINAL PREDICTION USING V5 THRESHOLD
@@ -675,33 +677,33 @@ if predict_button:
     # --------------------------------------------------------
     # METRICS
     # --------------------------------------------------------
-
     col1, col2, col3 = st.columns(3)
 
-
     with col1:
-
         st.metric(
             "Churn Probability",
             f"{probability_percent:.2f}%"
         )
 
-
     with col2:
-
         st.metric(
             "Risk Level",
             risk_level
         )
 
-
     with col3:
-
         st.metric(
-            "Model",
-            "IntelliChurn V5"
+            "Estimated Annual Revenue at Risk",
+            f"${estimated_annual_revenue_at_risk:,.2f}"
         )
 
+    st.caption(
+        "Revenue estimate = monthly charge × 12 × "
+        "churn probability. Assumes the monthly charge "
+        "remains constant for 12 months."
+    )
+
+    st.caption("Model: IntelliChurn V5")
 
     # --------------------------------------------------------
     # PROBABILITY PROGRESS BAR
@@ -793,6 +795,12 @@ if predict_button:
         ),
         "Risk Level": risk_level,
         "Prediction Threshold": THRESHOLD,
+                "Estimated Annual Revenue at Risk ($)": round(
+            estimated_annual_revenue_at_risk, 2
+        ),
+        "Revenue Estimate Basis": (
+            "Monthly charge x 12 x churn probability"
+        ),
         "Age": age,
         "Gender": gender,
         "Married": married,
